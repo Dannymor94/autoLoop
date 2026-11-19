@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="dark">
+    <title>autoLoop — owner console</title>
+    <link rel="stylesheet" href="/ui/style.css">
+    <script src="/ui/app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="brand">auto<span>Loop</span></div>
+        <div class="heading-row"><h1>Пульт задач</h1><span id="connection" class="pill">Не подключено</span></div>
+        <p class="subtitle">Точное состояние диспетчера. Подтверждение агента обязательно.</p>
+      </header>
+
+      <section id="login" class="card" hidden>
+        <h2>Вход владельца</h2>
+        <form id="login-form">
+          <label for="password">Пароль</label>
+          <input id="password" type="password" required autocomplete="current-password" minlength="12">
+          <button type="submit" class="primary">Войти</button>
+        </form>
+        <p class="hint">Доступ через локальный адрес или защищённый туннель. Терминал наружу не открывается.</p>
+      </section>
+
+      <section id="dashboard" hidden>
+        <div class="toolbar"><h2>Задачи</h2><div class="actions"><button id="refresh" type="button">Обновить</button><button id="logout" type="button">Выйти</button></div></div>
+        <div id="tasks" class="tasks" aria-live="polite"></div>
+        <p class="hint">Stop сначала отправляет команду. До подтверждения процесса задача остаётся RUNNING.</p>
+      </section>
+
+      <p id="notice" class="notice" role="status" aria-live="polite"></p>
+      <footer>autoLoop v0.3-dev · управление через состояния и доказательства, без публичного shell</footer>
+    </main>
+  </body>
+</html>
