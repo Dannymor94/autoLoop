@@ -1,0 +1,29 @@
+:root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #101521; color: #e7effe; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 860px; min-height: 100dvh; padding: max(28px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom)); margin: 0 auto; }
+.brand { color: #9db5da; letter-spacing: 0.08em; font-size: 14px; font-weight: 700; }
+.brand span { color: #6cf0b4; }
+.heading-row, .toolbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+h1 { margin: 15px 0 5px; font-size: clamp(28px, 5vw, 38px); letter-spacing: -0.04em; }
+h2 { font-size: 20px; margin: 0 0 14px; }
+.toolbar { margin: 28px 0 14px; }
+.toolbar h2 { margin: 0; }
+.subtitle, .hint, footer { color: #9eabc2; line-height: 1.5; font-size: 14px; }
+.subtitle { margin: 6px 0 22px; }
+.pill { padding: 6px 11px; border-radius: 50px; background: #2b3446; color: #c5d5ee; font-size: 12px; white-space: nowrap; }
+.pill.ok { background: #143d32; color: #77eac1; }
+.card, .task { border: 1px solid #303a4d; background: #1a2232; border-radius: 16px; padding: 20px; }
+.tasks { display: grid; gap: 12px; }
+.task h3 { font-size: 17px; margin: 0 0 10px; overflow-wrap: anywhere; }
+.task .meta { color: #a6b4ca; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.task .buttons { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; }
+button { border: 1px solid #3f4b5c; background: #293548; color: #ecf3ff; padding: 10px 13px; border-radius: 10px; font: inherit; cursor: pointer; min-height: 42px; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.primary { background: #187b66; border-color: #2bc196; color: #fff; font-weight: 600; }
+button.warning { background: #63412b; border-color: #ad7a4b; }
+input { width: 100%; padding: 13px 14px; border-radius: 10px; border: 1px solid #53617c; background: #101622; color: #fff; margin: 9px 0 14px; font: inherit; }
+label { font-size: 14px; color: #b9c6dd; }
+.notice { min-height: 20px; margin-top: 16px; color: #94e1bc; font-size: 14px; }
+footer { border-top: 1px solid #2a3549; margin-top: 48px; padding-top: 18px; }
+@media (max-width: 480px) { .heading-row { align-items: flex-start; flex-direction: column; } .toolbar { align-items: flex-start; } .card, .task { padding: 16px; } button { font-size: 14px; } }
