@@ -2,6 +2,8 @@
 
 Updated: 2026-11-19 (UTC). Evidence must be linked before a gate is marked PASS.
 
+Latest core prototype review: [draft PR #2](https://github.com/Dannymor94/autoLoop/pull/2), [first PR CI PASS on commit `1928d3e6`](https://github.com/Dannymor94/autoLoop/actions/runs/44616381127). This CI runs 71 core/contract unit tests and 8 offline pilot tests, not the live acceptance pilot.
+
 | Task | State | Evidence and next gate |
 | --- | --- | --- |
 | Bootstrap | DONE | Initial default branch and project README |
@@ -11,9 +13,9 @@ Updated: 2026-11-19 (UTC). Evidence must be linked before a gate is marked PASS.
 | AL-003 — Kandev pilot | NOT_TESTED | Requires AL-001 fixture; mandatory criteria 2–4. |
 | AL-004 — Cezar pilot | NOT_TESTED | Requires AL-001 fixture; mandatory criteria 2–4. |
 | AL-005 — select executor | BLOCKED_ON_PILOT | No platform selected; ADR-001 remains PROPOSED. |
-| AL-102 — SQLite dispatcher | LOCAL_PASS / PR_CI_PENDING | Single-writer WAL, 14 tables, Alembic, durable outbox, fencing, SIGKILL replay and Stop confirmation tested. No unattended process reconciler or full crash-recovery daemon yet. |
-| AL-103 — CLI adapters | LOCAL_MOCK_PASS / LIVE_NOT_TESTED | Worktree-bound Codex command adapter, private logs, JSON usage parsing, fail-closed uncertain delivery. Claude CLI not installed in test environment; subscription session unspent. |
-| AL-104 — QA evidence gate | LOCAL_MOCK_PASS / OS_ISOLATION_NOT_TESTED | Head/base/tested tree/spec/suite validation, protected paths, repeated failure escalation and max repair bound. Trusted GitHub/CI adapter, OS read-only push-negative test and real merge are absent. |
+| AL-102 — SQLite dispatcher | LOCAL_PASS / PR_CI_PASS | Single-writer WAL, 14 tables, Alembic, durable outbox, fencing, SIGKILL replay and Stop confirmation tested. No unattended process reconciler or full crash-recovery daemon yet. |
+| AL-103 — CLI adapters | LOCAL_MOCK_PASS / LIVE_NOT_TESTED | Worktree-bound Codex command adapter, private logs, JSON usage parsing, fail-closed uncertain delivery. Claude CLI not installed in test environment; subscription session unspent. Offline checks passed in PR CI. |
+| AL-104 — QA evidence gate | LOCAL_MOCK_PASS / OS_ISOLATION_NOT_TESTED | Head/base/tested tree/spec/suite validation, protected paths, repeated failure escalation and max repair bound. Trusted GitHub/CI adapter, OS read-only push-negative test and real merge are absent. Offline checks passed in PR CI. |
 | AL-105 — context checkpoints | LOCAL_PASS / LIVE_USAGE_NOT_TESTED | Structured usage or UNKNOWN, 65/80 guidance, SHA-bound immutable checkpoints. Real compact/clear intentionally disabled. |
 | AL-106 — mobile control | LOCAL_API_PASS / DEVICE_NOT_TESTED | Owner login, CSRF, HttpOnly cookie, Stop/Resume, responsive read-only dashboard on loopback. Private tunnel and physical phone test not configured. |
 | AL-107 — browser delivery bridge | NOT_STARTED | Out of MVP; explicit destination and delivery-only bridge contract still needed. |
