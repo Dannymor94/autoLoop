@@ -27,3 +27,6 @@ jobs:
         run: python scripts/generate_agent_docs.py --check
       - name: Check contract tests
         run: python -m unittest discover -s tests -v
+      - name: Check disposable pilot mock harness (no external effects)
+        run: python -m unittest discover -s harness_tests -v
+        working-directory: pilot/fixture

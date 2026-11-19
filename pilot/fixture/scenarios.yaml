@@ -1,0 +1,49 @@
+version: 1
+fixture_name: autoloop-orchestrator-pilot
+tasks:
+  - id: ALP-01
+    kind: implement
+    agent: claude
+    dependencies: []
+    repair_limit: 2
+  - id: ALP-02
+    kind: review
+    agent: codex
+    dependencies: [ALP-01]
+    repair_limit: 0
+  - id: ALP-03
+    kind: recovery
+    agent: mock
+    dependencies: [ALP-01]
+    repair_limit: 0
+  - id: ALP-04
+    kind: merge_gate
+    agent: mock
+    dependencies: [ALP-02, ALP-03]
+    repair_limit: 0
+  - id: ALP-05
+    kind: report
+    agent: mock
+    dependencies: [ALP-04]
+    repair_limit: 0
+scenarios:
+  - id: PILOT-T1
+    title: CLI subscription implementation plus PR
+    command: python -m unittest discover -s candidate_tests -v
+    requires: [claude_subscription, codex_subscription, github_pr_ci]
+  - id: PILOT-T2
+    title: Replay one exact deterministic YAML graph twice
+    command: python harness.py replay
+    requires: [zero_coordination_llm_calls, byte_identical_normalized_trace]
+  - id: PILOT-T3
+    title: SIGKILL recovery before and after side effect
+    command: python -m unittest discover -s harness_tests -v
+    requires: [fencing, durable_outbox, no_duplicate_mock_side_effect]
+  - id: PILOT-T4
+    title: Platform cannot merge or close canonical task
+    command: python -m unittest discover -s harness_tests -v
+    requires: [disable_platform_auto_merge, deny_merge_credentials, no_canonical_done]
+  - id: PILOT-T5
+    title: Repair budget, repeated failure, mobile stop resume
+    command: python -m unittest discover -s harness_tests -v
+    requires: [repair_limit_2, duplicate_failure_escalates, owner_stop_ack, android_real_device]

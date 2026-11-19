@@ -24,6 +24,9 @@ Deterministic-first orchestration for subscription-based Claude Code and Codex C
 | `contracts/*.json` | Task, runner event, QA evidence and report schemas |
 | `docs/ADR-001-executor.md` | Ownership matrix and pending OSS decision |
 | `docs/IMPLEMENTATION_PLAN.md` | Architecture, milestones and acceptance plan |
+| `docs/STATUS.md` | Current task/evidence tracker (never infer CI PASS) |
+| `pilot/fixture/` | Copyable offline pilot template; includes five scenarios and SIGKILL mock checks |
+| `pilot/RESULTS.md` | Binary candidate matrix; initially all NOT_TESTED |
 | `AGENTS.md`, `CLAUDE.md` | Agent instructions; marked sections are generated from contracts |
 | `scripts/generate_agent_docs.py` | Deterministic generator and drift check |
 
@@ -36,6 +39,7 @@ python -m pip install -r requirements-dev.txt
 python scripts/validate_contracts.py
 python scripts/generate_agent_docs.py --check
 python -m unittest discover -s tests -v
+python -m unittest discover -s pilot/fixture/harness_tests -v
 ```
 
 To regenerate marked agent instruction blocks after changing a contract:
@@ -48,7 +52,7 @@ CI verifies generated content; it does **not** regenerate or silently overwrite 
 
 ## Next acceptance gates
 
-1. **AL-001**: freeze a disposable five-scenario pilot fixture, execute it against each candidate and record independently verifiable PASS/FAIL/NOT_TESTED outcomes.
+1. **AL-001**: finish freezing the disposable five-scenario pilot fixture, then execute it against each candidate and record independently verifiable PASS/FAIL/NOT_TESTED outcomes. The checked-in mock harness is **preflight only**.
 2. **AL-002/003/004**: run the Bernstein/Kandev/Cezar pilots with subscription credentials on an isolated user-controlled host.
 3. **AL-005**: choose the platform only if mandatory gates 2–4 pass, then finalize ADR-001.
 4. **AL-101**: contracts and generated instruction files must pass CI before the dispatcher implementation starts.
