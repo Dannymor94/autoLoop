@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Dannymor94/autoLoop/blob/main/contracts/evidence.schema.json",
+  "title": "autoLoop QA Evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["project_id", "task_id", "acceptance_spec_hash", "head_sha", "base_sha", "tested_tree_sha", "suite_fingerprint", "evidence_key", "ci_success", "independent_qa_verdict"],
+  "properties": {
+    "project_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "acceptance_spec_hash": {"$ref": "#/$defs/sha256"},
+    "head_sha": {"$ref": "#/$defs/gitSha"},
+    "base_sha": {"$ref": "#/$defs/gitSha"},
+    "tested_tree_sha": {"$ref": "#/$defs/gitSha"},
+    "tested_merge_sha": {"anyOf": [{"$ref": "#/$defs/gitSha"}, {"type": "null"}]},
+    "suite_fingerprint": {"$ref": "#/$defs/sha256"},
+    "evidence_key": {"$ref": "#/$defs/sha256"},
+    "ci_success": {"type": "boolean"},
+    "independent_qa_verdict": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+    "ci_workflow_ref": {"type": "string"},
+    "ci_run_url": {"type": "string", "format": "uri"},
+    "qa_run_id": {"type": "string"},
+    "recorded_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "gitSha": {"type": "string", "pattern": "^([a-f0-9]{40}|[a-f0-9]{64})$"}
+  },
+  "description": "Fingerprint = SHA-256 canonical JSON over commands, lockfile hashes, CI workflow hashes and tool versions. Evidence key = SHA-256 canonical JSON over project/task/acceptance/head/base/tested tree/suite fingerprint."
+}

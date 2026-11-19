@@ -1,0 +1,43 @@
+version: 1
+canonical_state_owner: autoLoop
+executor:
+  adapter_role: one_explicit_attempt_only
+  platform_auto_merge: false
+  platform_auto_close: false
+  platform_claim_next_task: false
+  platform_repair_retry: false
+  platform_can_assign_canonical_state: false
+  platform_has_merge_credentials: false
+storage:
+  backend: sqlite
+  journal_mode: WAL
+  schema_migrations: alembic
+  orm: sqlalchemy
+  database_writers: 1
+qa:
+  independent_fresh_session: true
+  read_only_source_tree: true
+  can_push_to_github: false
+  can_access_developer_reasoning: false
+  require_exact_head_sha: true
+  require_exact_base_sha: true
+  require_tested_tree_sha: true
+  require_suite_fingerprint: true
+  repeated_failure_action: ESCALATED
+merge:
+  only_actor: autoLoop
+  require_fresh_ci: true
+  require_independent_qa_pass: true
+  stale_base_action: VERIFYING
+owner_stop:
+  pending_command_status: STOP_PENDING
+  confirmed_task_status: BLOCKED
+  confirmed_block_reason: OWNER_STOP
+  resume_target_status: READY
+  resume_requires_confirmed_stop: true
+browser_bridge:
+  mode: delivery_only
+  read_assistant_replies: false
+  require_dispatcher_request_id: true
+  require_payload_hash: true
+  allow_automatic_claude_web_send: false

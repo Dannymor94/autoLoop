@@ -1,0 +1,11 @@
+version: 1
+paths:
+  - contracts/**
+  - .github/workflows/**
+  - AGENTS.md
+  - CLAUDE.md
+  - docs/ADR-*.md
+  - .env*
+  - '**/secrets/**'
+  - '**/*credential*'
+policy: explicit_owner_approval_before_modification_or_merge

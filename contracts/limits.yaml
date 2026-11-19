@@ -1,0 +1,14 @@
+version: 1
+repair:
+  max_repair_cycles: 2
+  escalate_on_repeated_failure_fingerprint: true
+context:
+  checkpoint_suggest_percent: 65
+  prepare_new_session_percent: 80
+  subscription_remaining_tokens: UNKNOWN
+runner:
+  stop_ack_timeout_seconds: 30
+  heartbeat_timeout_seconds: 60
+  max_parallel_attempts_per_task: 1
+dispatcher:
+  max_writers: 1

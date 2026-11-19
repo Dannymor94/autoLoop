@@ -1,0 +1,131 @@
+version: 1
+initial_state: READY
+states:
+  READY:
+    description: Runnable when dependencies and policy checks are satisfied.
+    terminal: false
+  RUNNING:
+    description: Exactly one leased executor attempt is active.
+    terminal: false
+  VERIFYING:
+    description: Independent QA and CI validate exact Git evidence.
+    terminal: false
+  MERGING:
+    description: autoLoop alone holds the gated merge or close operation.
+    terminal: false
+  DONE:
+    description: Final merge or no-merge completion confirmed by autoLoop.
+    terminal: true
+  BLOCKED:
+    description: Requires a named resolution reason; OWNER_STOP is reversible.
+    terminal: false
+  ESCALATED:
+    description: Owner intervention required for repeated or exhausted failure.
+    terminal: false
+  SUPERSEDED:
+    description: Replaced by a new plan because acceptance or dependencies changed.
+    terminal: true
+
+# Each (from,event) pair is unique. Guards are evaluated by autoLoop code;
+# platform notifications alone do not authorize a transition.
+transitions:
+  - from: READY
+    to: RUNNING
+    event: CLAIM_ATTEMPT
+    guards: [dependencies_done, lease_granted, fencing_token_valid]
+  - from: READY
+    to: BLOCKED
+    event: DEPENDENCY_BLOCKED
+    guards: [dependency_blocked_reason_recorded]
+  - from: READY
+    to: SUPERSEDED
+    event: REPLACE_PLAN
+    guards: [acceptance_or_dependencies_changed, replacement_recorded]
+  - from: RUNNING
+    to: VERIFYING
+    event: EXECUTION_FINISHED
+    guards: [runner_exit_observed, attempt_artifacts_recorded, lease_fencing_valid]
+  - from: RUNNING
+    to: BLOCKED
+    event: OWNER_STOP_CONFIRMED
+    guards: [runner_stop_confirmed, checkpoint_recorded, block_reason_owner_stop]
+  - from: RUNNING
+    to: BLOCKED
+    event: EXECUTION_BLOCKED
+    guards: [runner_quiesced, blocking_reason_recorded]
+  - from: RUNNING
+    to: ESCALATED
+    event: TERMINAL_EXECUTION_FAILURE
+    guards: [runner_quiesced, failure_evidence_recorded]
+  - from: VERIFYING
+    to: MERGING
+    event: QA_AND_CI_PASS
+    guards: [head_sha_current, base_sha_current, tested_tree_sha_current, acceptance_spec_current, suite_fingerprint_current, independent_qa_pass, ci_success, merge_policy_allows]
+  - from: VERIFYING
+    to: VERIFYING
+    event: INVALIDATE_EVIDENCE
+    guards: [evidence_change_observed, old_evidence_revoked]
+  - from: VERIFYING
+    to: RUNNING
+    event: START_REPAIR
+    guards: [qa_failure_recorded, failure_fingerprint_new, repair_budget_available, new_attempt_lease_granted]
+  - from: VERIFYING
+    to: ESCALATED
+    event: REPEATED_FAILURE
+    guards: [duplicate_failure_fingerprint, failure_evidence_recorded]
+  - from: VERIFYING
+    to: ESCALATED
+    event: REPAIR_LIMIT
+    guards: [repair_budget_exhausted, failure_evidence_recorded]
+  - from: VERIFYING
+    to: BLOCKED
+    event: WAIT_FOR_APPROVAL
+    guards: [approval_required, blocking_reason_recorded]
+  - from: VERIFYING
+    to: SUPERSEDED
+    event: REPLACE_PLAN
+    guards: [acceptance_or_dependencies_changed, replacement_recorded]
+  - from: MERGING
+    to: DONE
+    event: FINALIZE_MERGE
+    guards: [auto_loop_merge_confirmed, exact_evidence_still_valid, target_ref_confirmed]
+  - from: MERGING
+    to: VERIFYING
+    event: MERGE_EVIDENCE_STALE
+    guards: [merge_not_started, evidence_change_observed, old_evidence_revoked]
+  - from: MERGING
+    to: BLOCKED
+    event: MERGE_OUTCOME_UNKNOWN
+    guards: [merge_reconciliation_required, blocking_reason_recorded]
+  - from: BLOCKED
+    to: READY
+    event: RESUME_OWNER_STOP
+    guards: [block_reason_owner_stop, runner_stop_confirmed, dependencies_done, no_active_lease]
+  - from: BLOCKED
+    to: READY
+    event: DEPENDENCIES_RECOVERED
+    guards: [dependency_blocked_reason_recorded, dependencies_done, no_active_lease]
+  - from: BLOCKED
+    to: VERIFYING
+    event: QA_APPROVAL_RECEIVED
+    guards: [qa_block_reason_recorded, approval_confirmed, evidence_recheck_required]
+  - from: BLOCKED
+    to: MERGING
+    event: MERGE_RECONCILED
+    guards: [previously_in_merging, merge_reconciliation_complete, no_duplicate_side_effect, prior_qa_pass_still_valid, exact_evidence_still_valid]
+  - from: BLOCKED
+    to: ESCALATED
+    event: DEPENDENCY_NOT_RECOVERABLE
+    guards: [dependency_superseded_or_terminal, escalation_reason_recorded]
+  - from: BLOCKED
+    to: SUPERSEDED
+    event: REPLACE_PLAN
+    guards: [acceptance_or_dependencies_changed, replacement_recorded]
+  - from: ESCALATED
+    to: READY
+    event: OWNER_REAUTHORIZE
+    guards: [explicit_owner_approval, new_attempt_budget_recorded, dependencies_done]
+  - from: ESCALATED
+    to: SUPERSEDED
+    event: REPLACE_PLAN
+    guards: [acceptance_or_dependencies_changed, replacement_recorded]

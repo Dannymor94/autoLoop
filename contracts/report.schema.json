@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Dannymor94/autoLoop/blob/main/contracts/report.schema.json",
+  "title": "autoLoop Attempt Report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["project_id", "task_id", "attempt_id", "result", "head_sha", "base_sha", "tested_tree_sha", "tests", "artifacts", "tokens"],
+  "properties": {
+    "project_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "attempt_id": {"type": "string", "minLength": 1},
+    "result": {"enum": ["COMPLETED", "FAILED", "INTERRUPTED", "UNKNOWN"]},
+    "head_sha": {"type": ["string", "null"]},
+    "base_sha": {"type": ["string", "null"]},
+    "tested_tree_sha": {"type": ["string", "null"]},
+    "tests": {"type": "array", "items": {"type": "object", "required": ["command", "outcome"], "properties": {"command": {"type": "string"}, "outcome": {"enum": ["PASS", "FAIL", "NOT_TESTED"]}}}},
+    "artifacts": {"type": "array", "items": {"type": "string"}},
+    "tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "output", "context_used_percent", "subscription_remaining"],
+      "properties": {
+        "input": {"type": ["integer", "null"], "minimum": 0},
+        "output": {"type": ["integer", "null"], "minimum": 0},
+        "context_used_percent": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "subscription_remaining": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "notes": {"type": "string"}
+  },
+  "description": "Unknown usage values MUST be null; subscription balance must never be fabricated."
+}

@@ -1,0 +1,29 @@
+name: Contract integrity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install contract tooling
+        run: python -m pip install -r requirements-dev.txt
+      - name: Validate normative contract invariants
+        run: python scripts/validate_contracts.py
+      - name: Fail on generated instruction drift
+        run: python scripts/generate_agent_docs.py --check
+      - name: Check contract tests
+        run: python -m unittest discover -s tests -v
