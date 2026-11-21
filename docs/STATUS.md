@@ -13,8 +13,8 @@ execution sequence is unchanged.
 **v0.4.1 approved:** see [PLAN_V0.4.1.md](PLAN_V0.4.1.md). Own prototype is
 provisionally selected; launchd Smoke A and real Mac E2E are the next gates. The older
 Bernstein/Kandev/Cezar live pilot is deferred unless E2E fails. The offline
-implementation is prepared for a **separate stacked draft PR**; it must not
-be conflated with PR #2's earlier CI evidence.
+implementation is published as **[stacked draft PR #3](https://github.com/Dannymor94/autoLoop/pull/3)**
+over PR #2; it must not be conflated with PR #2's earlier CI evidence.
 
 v0.4.1 planning update: per-attempt `fcntl.flock` wrapper replaces proposed
 long-lived supervisor, Smoke A explicitly tests launchd/Keychain auth,
@@ -22,7 +22,7 @@ publisher is commit-local + autoLoop push/PR, and four crash-injection
 points are frozen in `pilot/e2e/manifest.yaml`. **The wrapper is offline-tested;
 Mac login, GitHub rulesets and publisher have NOT been tested live.**
 
-**Offline v0.4.2 implementation (local, pending GitHub CI):** added the isolated
+**Offline v0.4.2 implementation (GitHub Actions matrix PASS, live E2E NOT TESTED):** added the isolated
 `attempt_wrapper.py` with durable one-shot launch intent, inherited `flock`,
 bounded process wait and validated `.exit` receipt; `billing_guard.py` with
 mock-tested subscriber auth/provider checks; owner-time append-only JSONL
@@ -30,6 +30,11 @@ ledger and `python -m autoloop time start/stop/summary`; and an observed
 termination-lag parser. Added offline CI matrix `ubuntu-latest` + `macos-15`
 and [Mac handoff](MAC_HANDOFF.md). **No SQLite outbox/worker integration, live
 Mac auth, OS-separated QA, Github publisher or real Smoke B PASS yet.**
+
+**Independent offline CI evidence:** [run 44946019997](https://github.com/Dannymor94/autoLoop/actions/runs/44946019997)
+on commit `c175178db5ffbfc6d3d6581b5c1db77150f142a8` passed on
+`ubuntu-latest` and `macos-15`. This establishes CI portability, not access
+to the owner's Keychain, CLI subscriptions or remote phone.
 
 **Local-only Stage 0 result (2026-11-21):** offline core suite (110 tests PASS), 8 mock fixture
 tests PASS, contracts validator PASS, generated agent-doc drift check PASS.
