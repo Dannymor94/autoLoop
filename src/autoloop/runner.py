@@ -13,6 +13,7 @@ import subprocess
 from typing import Any
 from uuid import UUID
 
+from autoloop.attempt_journal import AttemptJournalError, recover_attempt_log, seal_attempt_log
 from autoloop.dispatcher import DispatchRejected, payload_hash
 
 
@@ -148,6 +149,19 @@ class CodexCliAdapter:
         if proc is None or proc.poll() is None:
             raise DispatchRejected("PROCESS_NOT_FINISHED")
         stdout_path, stderr_path = self.logs[request_id]
+        # The durable receipt is committed BEFORE returning a result to any
+        # SQLite updater. The caller must not mark completion on journal error.
+        receipt_path = self.log_dir / f"{request_id}.receipt.json"
+        try:
+            completion_receipt = seal_attempt_log(
+                log_path=stdout_path,
+                receipt_path=receipt_path,
+                request_id=request_id,
+                provider="codex",
+                exit_code=proc.returncode,
+            )
+        except (AttemptJournalError, OSError) as exc:
+            raise DispatchRejected("ATTEMPT_RESULT_UNKNOWN") from exc
         usage: dict[str, int | float | None] = {"input_tokens": None, "output_tokens": None, "context_used_percent": None, "subscription_remaining": None}
         events: list[dict] = []
         total_event_count = 0
@@ -174,7 +188,22 @@ class CodexCliAdapter:
             stderr_tail = handle.read().decode("utf-8", errors="replace")
         del self.active[request_id]
         del self.logs[request_id]
-        return {"exit_code": proc.returncode, "thread_id": thread_id, "events": events, "total_event_count": total_event_count, "usage": usage, "stderr_tail": stderr_tail}
+        return {"exit_code": proc.returncode, "thread_id": thread_id, "events": events, "total_event_count": total_event_count, "usage": usage, "stderr_tail": stderr_tail, "completion_receipt": completion_receipt}
+
+    def recover_completion_receipt(self, request_id: str) -> dict[str, Any] | None:
+        """Read-only recovery after process/worker restart; None = UNKNOWN.
+
+        A verified receipt is still just process evidence; callers must
+        reconcile the SQLite outbox, fencing token and Git state separately.
+        """
+        try:
+            UUID(request_id)
+        except ValueError as exc:
+            raise DispatchRejected("INVALID_REQUEST_ID") from exc
+        return recover_attempt_log(
+            log_path=self.log_dir / f"{request_id}.stdout.jsonl",
+            receipt_path=self.log_dir / f"{request_id}.receipt.json",
+        )
 
     def compact_if_supported(self, _request_id: str) -> str:
         return "UNSUPPORTED"  # no blind /clear; requires checkpoint + new explicit session

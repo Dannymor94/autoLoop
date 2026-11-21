@@ -16,6 +16,13 @@ class AgentDocsTests(unittest.TestCase):
     def test_repository_docs_in_sync(self) -> None:
         self.assertEqual(check_or_write(ROOT, check=True), [])
 
+    def test_owner_efficiency_rule_is_outside_generated_contract_block(self) -> None:
+        content = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        owner_instructions = content.split(BEGIN, maxsplit=1)[0]
+        self.assertIn("increase the number of independently accepted tasks", owner_instructions)
+        self.assertIn("reduce the owner's active", owner_instructions)
+        self.assertIn("lower the risk of an incorrect or unsafe outcome", owner_instructions)
+
     def test_preserves_unmarked_custom_content(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

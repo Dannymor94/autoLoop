@@ -2,6 +2,14 @@
 
 Read this file before working in this repository.
 
+## Owner's efficiency rule
+
+Every new autoLoop feature must demonstrably do at least one of the following:
+increase the number of independently accepted tasks, reduce the owner's active
+time, or lower the risk of an incorrect or unsafe outcome. If none can be
+measured or justified, defer the feature. Reliability and security gates must
+never be weakened to improve throughput or apparent savings.
+
 <!-- BEGIN AUTOLOOP-GENERATED RULES -->
 ## autoLoop contract rules (generated; do not edit this section)
 
