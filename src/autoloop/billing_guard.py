@@ -136,6 +136,14 @@ def confirmed_subscription_login(provider: str, *, run: Callable[..., subprocess
 
 def subscription_preflight(provider: str, *, home: Path, worktree: Path, managed_paths: tuple[Path, ...] = (), source_env: Mapping[str, str] | None = None, run: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run) -> dict[str, str]:
     env = isolated_subscription_env(source_env)
+    # Never inspect one user's auth/settings and launch the CLI using a
+    # different HOME. The actual subscriber identity must be the one checked.
+    try:
+        configured_home = Path(env["HOME"])
+        if not configured_home.is_absolute() or configured_home.resolve(strict=True) != home.resolve(strict=True):
+            raise BillingModeRejected("BILLING_MODE:HOME_MISMATCH")
+    except (KeyError, OSError) as exc:
+        raise BillingModeRejected("BILLING_MODE:HOME_UNAVAILABLE") from exc
     if provider == "claude":
         inspect_claude_settings(home=home, worktree=worktree, managed_paths=managed_paths)
     elif provider == "codex":

@@ -15,8 +15,9 @@ values or Keychain output into a report.
 3. Run `claude auth status --json` and `codex login status` locally and
    redact usernames/emails. Verify **subscriber** login, not API credentials.
 4. Inspect all effective settings scopes, including managed settings and
-   configured authentication/provider overrides. `apiKeyHelper`, API
-   variables or unrecognized settings must block; no paid API fallback.
+   configured authentication/provider overrides. The checked `HOME` must
+   match the CLI child process `HOME`. `apiKeyHelper`, API variables,
+   redirected home or unrecognized settings must block; no paid API fallback.
 5. Use real `launchd` **LaunchAgent** under the logged-in owner account and
    compare noninteractive auth result with Terminal; test a separate QA
    macOS user only after that user's own interactive account login.

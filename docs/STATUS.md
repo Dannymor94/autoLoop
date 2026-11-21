@@ -36,7 +36,7 @@ on commit `c175178db5ffbfc6d3d6581b5c1db77150f142a8` passed on
 `ubuntu-latest` and `macos-15`. This establishes CI portability, not access
 to the owner's Keychain, CLI subscriptions or remote phone.
 
-**Local-only Stage 0 result (2026-11-21):** offline core suite (110 tests PASS), 8 mock fixture
+**Local-only Stage 0 result (2026-11-21):** offline core suite (111 tests PASS), 8 mock fixture
 tests PASS, contracts validator PASS, generated agent-doc drift check PASS.
 Added Git-visible dirty-tree SHA capture to checkpoints, `require_checkpoint_unchanged`,
 Codex JSONL fsync receipts with read-only recovery, and a frozen `pilot/e2e/`

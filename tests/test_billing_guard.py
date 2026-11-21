@@ -38,12 +38,17 @@ class BillingGuardTests(unittest.TestCase):
         return run
 
     def test_codex_subscription_only_positive(self):
-        env = subscription_preflight("codex", home=self.home, worktree=self.worktree, source_env={"PATH": "/bin"}, run=self.fake_status("Logged in using ChatGPT\n"))
+        env = subscription_preflight("codex", home=self.home, worktree=self.worktree, source_env={"PATH": "/bin", "HOME": str(self.home)}, run=self.fake_status("Logged in using ChatGPT\n"))
         self.assertEqual(env["GIT_TERMINAL_PROMPT"], "0")
 
     def test_claude_subscription_only_positive(self):
         status = json.dumps({"loggedIn": True, "authMethod": "claude.ai"})
-        subscription_preflight("claude", home=self.home, worktree=self.worktree, source_env={"PATH": "/bin"}, run=self.fake_status(status))
+        subscription_preflight("claude", home=self.home, worktree=self.worktree, source_env={"PATH": "/bin", "HOME": str(self.home)}, run=self.fake_status(status))
+
+    def test_auth_home_must_match_inspected_home(self):
+        for wrong_env in ({"PATH": "/bin"}, {"PATH": "/bin", "HOME": str(self.root)}):
+            with self.subTest(wrong_env=wrong_env), self.assertRaisesRegex(BillingModeRejected, "HOME_"):
+                subscription_preflight("codex", home=self.home, worktree=self.worktree, source_env=wrong_env, run=self.fake_status("Logged in using ChatGPT"))
 
     def test_env_api_billing_override_is_blocked_before_auth_check(self):
         for key in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_USE_BEDROCK"):
@@ -61,7 +66,7 @@ class BillingGuardTests(unittest.TestCase):
         for content in ('model_provider = "custom_gateway"\n', '[model_providers.custom_gateway]\nbase_url = "https://example.invalid"\n'):
             config.write_text(content, encoding="utf-8")
             with self.assertRaisesRegex(BillingModeRejected, "CUSTOM_CODEX_PROVIDER"):
-                subscription_preflight("codex", home=self.home, worktree=self.worktree, source_env={"PATH": "/bin"}, run=self.fake_status("Logged in using ChatGPT"))
+                subscription_preflight("codex", home=self.home, worktree=self.worktree, source_env={"PATH": "/bin", "HOME": str(self.home)}, run=self.fake_status("Logged in using ChatGPT"))
 
     def test_api_key_helper_and_nested_env_are_blocked(self):
         settings = self.worktree / ".claude" / "settings.local.json"
