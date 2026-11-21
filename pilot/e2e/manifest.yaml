@@ -1,0 +1,53 @@
+version: 1
+task_id: AL-E2E-001
+source_spec: ACCEPTANCE.md
+acceptance_spec_sha256: 06dc93672600f740c9707376e0f32bca2078cd5e5ac3b41a556c7b3ea49f63e5
+fixture_directory: disposable_repo
+expected_baseline_tests: FAIL_NOT_IMPLEMENTED
+runner_roles:
+  implementation: claude_headless
+  verification: codex_headless_read_only
+  test_executor: github_actions_or_disposable_copy
+run_modes:
+  - normal
+  - kill_after_claim_before_start
+  - kill_during_implementation
+  - kill_after_process_exit_before_sqlite_commit
+  - kill_after_push_before_pr
+kill_points:
+  - id: K1_AFTER_CLAIM_BEFORE_START
+    inject: kill_dispatcher_after_claim_before_durable_wrapper_launch_intent
+    expected_state: RUNNING_START_PENDING
+    required_invariant: exactly_one_first_start_after_recovery_with_proof_wrapper_never_invoked
+  - id: K2_DURING_AGENT
+    inject: kill_dispatcher_while_wrapper_lock_is_busy
+    expected_state: RUNNING_REATTACHED_TO_LOCKED_ATTEMPT
+    required_invariant: busy_lock_prevents_duplicate_start_and_child_keeps_lock_if_wrapper_dies
+  - id: K3_AFTER_EXIT_BEFORE_DB
+    inject: kill_dispatcher_after_atomic_exit_before_sqlite_commit
+    expected_state: VERIFYING
+    required_invariant: exactly_one_completion_transition_and_no_second_agent
+  - id: K4_AFTER_PUSH_BEFORE_PR
+    inject: kill_publisher_after_remote_push_before_pr_create
+    expected_state: VERIFYING_WITH_SINGLE_PR
+    required_invariant: remote_sha_reused_no_second_push_or_duplicate_pr
+required_artifacts:
+  - baseline_commit_sha
+  - pr_url_and_number
+  - head_sha
+  - base_sha
+  - dirty_tree_sha_at_checkpoint
+  - tested_tree_sha
+  - suite_fingerprint
+  - ci_run_url_and_conclusion
+  - independent_qa_verdict_with_session_id
+  - qa_push_denial_with_os_identity
+  - raw_attempt_jsonl_and_fsync_receipt
+  - attempt_wrapper_lock_and_exit_observations
+  - sqlite_event_log_and_fencing_tokens
+  - recovery_result_and_idempotency_check
+  - remote_branch_sha_and_pr_deduplication_evidence
+  - approval_and_merge_disabled_evidence
+pass_rule: ALL_ARTIFACTS_PRESENT_AND_IDENTITIES_MATCH
+forbid_implicit_pass: true
+forbid_merge_or_close: true

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,6 +12,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from autoloop.context import ContextTracker  # noqa: E402
 from autoloop.database import create_database_engine, migrate, sqlite_url  # noqa: E402
 from autoloop.dispatcher import DispatchRejected, Dispatcher  # noqa: E402
+from autoloop.git_snapshot import OwnerInterventionDetected  # noqa: E402
 
 
 class ContextTests(unittest.TestCase):
@@ -59,10 +61,24 @@ class ContextTests(unittest.TestCase):
             self.tracker.record_usage(attempt_id=self.claim["attempt_id"], event_id="x", input_tokens=0, output_tokens=0, context_used_percent=101)
 
     def test_checkpoint_hash_binds_sha_and_is_idempotent(self) -> None:
-        args = dict(task_id="A", attempt_id=self.claim["attempt_id"], checkpoint_id="checkpoint-001", head_sha="a" * 40, base_sha="b" * 40, summary="Implemented function", next_safe_action="Run QA", open_questions=["review SHA"])
+        repo = Path(self.temp.name) / "git-worktree"
+        repo.mkdir()
+        def git(*command: str) -> str:
+            return subprocess.run(["git", "-C", str(repo), *command], check=True, text=True, capture_output=True).stdout.strip()
+        git("init", "-q")
+        git("config", "user.email", "fixture@example.invalid")
+        git("config", "user.name", "Fixture")
+        (repo / "file.txt").write_text("baseline", encoding="utf-8")
+        git("add", "file.txt")
+        git("commit", "-qm", "baseline")
+        args = dict(task_id="A", attempt_id=self.claim["attempt_id"], checkpoint_id="checkpoint-001", head_sha=git("rev-parse", "HEAD"), base_sha="b" * 40, worktree=repo, summary="Implemented function", next_safe_action="Run QA", open_questions=["review SHA"])
         first = self.tracker.checkpoint(**args)
         self.assertFalse(first["duplicate"])
         self.assertTrue(self.tracker.checkpoint(**args)["duplicate"])
+        self.tracker.require_checkpoint_unchanged(task_id="A", checkpoint_id="checkpoint-001", worktree=repo)
+        (repo / "file.txt").write_text("changed by owner", encoding="utf-8")
+        with self.assertRaises(OwnerInterventionDetected):
+            self.tracker.require_checkpoint_unchanged(task_id="A", checkpoint_id="checkpoint-001", worktree=repo)
         with self.assertRaisesRegex(DispatchRejected, "CHECKPOINT_ID_CONFLICT"):
             self.tracker.checkpoint(**dict(args, base_sha="f" * 40))
 

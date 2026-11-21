@@ -12,6 +12,7 @@ import uuid
 from autoloop.api import create_app
 from autoloop.database import create_database_engine, migrate, sqlite_url
 from autoloop.dispatcher import DispatchRejected, Dispatcher
+from autoloop.owner_time import OwnerTimeLedger, OwnerTimeRejected
 
 
 def parser() -> argparse.ArgumentParser:
@@ -48,11 +49,25 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--key", default=None)
     p = actions.add_parser("serve")
     p.add_argument("--port", type=int, default=8765)
+    p = actions.add_parser("time", help="Owner-measured active time; no model invocation")
+    p.add_argument("time_action", choices=("start", "stop", "summary"))
+    p.add_argument("task_id")
+    p.add_argument("--ledger", type=Path, default=Path("data/owner-time.jsonl"))
+    p.add_argument("--key", default=None)
     return top
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
+    if args.action == "time":
+        try:
+            ledger = OwnerTimeLedger(args.ledger)
+            result = ledger.summary(args.task_id) if args.time_action == "summary" else ledger.record(task_id=args.task_id, action=args.time_action.upper(), idempotency_key=args.key or str(uuid.uuid4()))
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+            return 0
+        except (OwnerTimeRejected, OSError) as exc:
+            print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
+            return 3
     if args.action == "serve" and not os.environ.get("AUTOLOOP_OWNER_PASSWORD"):
         print("Set AUTOLOOP_OWNER_PASSWORD (12+ characters) before serving the owner UI", file=sys.stderr)
         return 2

@@ -2,7 +2,7 @@
 
 Deterministic-first orchestration for subscription-based Claude Code and Codex CLI agents, with independent QA and mobile-first control.
 
-**Project status:** contracts and the offline deterministic prototype are implemented; the actual subscription CLI + independent OS-isolated QA + mobile-on-device loop is **not** yet validated. No OSS executor has been selected or passed the AL-001 live acceptance pilot. See [the implementation plan](docs/IMPLEMENTATION_PLAN.md) and [evidence/status](docs/STATUS.md).
+**Project status:** contracts and the offline deterministic prototype are implemented; the actual subscription CLI + independent OS-isolated QA + mobile-on-device loop is **not** yet validated. The owner accepted the [efficiency-first v0.4.2 supplement](docs/PLAN_V0.4.2.md) to the [E2E-first v0.4.1 plan](docs/PLAN_V0.4.1.md): begin with launchd-authenticated Smoke A, use one per-attempt wrapper with flock rather than a resident supervisor, and freeze four SIGKILL points. The own prototype remains provisional; Bernstein/Kandev/Cezar are fallback only. The earlier [v0.2 plan](docs/IMPLEMENTATION_PLAN.md) and [v0.4 plan](docs/PLAN_V0.4.md) are historical; see [evidence/status](docs/STATUS.md) for verified progress.
 
 ## Non-negotiable boundaries
 
@@ -12,6 +12,7 @@ Deterministic-first orchestration for subscription-based Claude Code and Codex C
 - QA runs in a fresh independent context and read-only checkout, without developer chain-of-thought or GitHub write credentials. Final evidence binds `head_sha`, `base_sha`, the tested Git tree, the acceptance spec and the CI suite fingerprint.
 - The initial backend will use **SQLite/WAL + SQLAlchemy + Alembic** with a single dispatcher writer. PostgreSQL is a later multi-writer/multi-host decision.
 - Browser chat integration is **delivery-only**. It does not read chat replies or authorize state transitions.
+- Every new feature must measurably increase accepted-task throughput, save owner-active time, or lower risk; model-output counts and unverified token savings are not results. Economic measurement protocols live in [`docs/ECONOMICS.md`](docs/ECONOMICS.md) and [`docs/METRICS.md`](docs/METRICS.md).
 
 ## Repository map
 
@@ -24,12 +25,21 @@ Deterministic-first orchestration for subscription-based Claude Code and Codex C
 | `contracts/*.json` | Task, runner event, QA evidence and report schemas |
 | `docs/ADR-001-executor.md` | Ownership matrix and pending OSS decision |
 | `docs/IMPLEMENTATION_PLAN.md` | Architecture, milestones and acceptance plan |
+| `docs/PLAN_V0.4.md` | Historical E2E-first plan, superseded by v0.4.1 |
+| `docs/PLAN_V0.4.1.md` | Current approved plan: attempt wrapper, launchd Smoke A, publisher, four SIGKILL gates |
+| `docs/PLAN_V0.4.2.md` | Approved economic/observability supplement; execution order preserved |
+| `docs/ECONOMICS.md`, `docs/METRICS.md` | Prospective ROI, predeclared hypotheses, provenance and measurements |
+| `docs/MAC_HANDOFF.md` | Strict owner-Mac auth, launchd, QA and full E2E checks after offline CI |
 | `docs/STATUS.md` | Current task/evidence tracker (never infer CI PASS) |
 | `pilot/fixture/` | Copyable offline pilot template; includes five scenarios and SIGKILL mock checks |
+| `pilot/e2e/` | Frozen real-Mac smoke task/specification, disposable source and evidence manifest |
 | `pilot/RESULTS.md` | Binary candidate matrix; initially all NOT_TESTED |
 | `AGENTS.md`, `CLAUDE.md` | Agent instructions; marked sections are generated from contracts |
 | `scripts/generate_agent_docs.py` | Deterministic generator and drift check |
 | `src/autoloop/` | Durable dispatcher, fenced runner outbox, SHA-bound QA, context ledger, local mobile API |
+| `src/autoloop/attempt_wrapper.py` | Detached per-attempt `flock` + intent + sealed exit; not yet connected to SQLite outbox |
+| `src/autoloop/billing_guard.py` | Subscription-only fail-closed preflight; real vendor auth version must be validated on Mac |
+| `src/autoloop/owner_time.py` | Owner-started durable event ledger (`python -m autoloop time`) |
 | `migrations/` | Alembic schema for SQLite/WAL with a single writer |
 | `web/` | Password-gated mobile browser UI with Stop/Resume requests |
 
@@ -80,11 +90,32 @@ The CLI can claim a task (`claim --worker name --key unique-key`); an accepted c
 
 `codex exec --json --sandbox workspace-write` is invoked with instructions on stdin and no bypass-permission flags. That Codex sandbox is not proof that the QA runner is independently OS-isolated. Token values are reported **only when a CLI event exposes them**; unknown context fullness and remaining subscription quota stay `null`/`UNKNOWN`. Agents are not automatically cleared/compacted.
 
+Offline after-v0.4.2 controls: a **separate, not-yet-wired** per-attempt wrapper
+rejects repeated/uncertain start, keeps `flock` with the child process,
+enforces a wall-clock timeout and seals an exact-command/fence exit receipt.
+`billing_guard` rejects known API environment overrides, `apiKeyHelper` and
+unrecognized subscriber login status. These are testable with mock CLI output;
+**real subscription auth under launchd is unverified**, and the normal Codex
+adapter above has not yet been migrated to the wrapper. Use
+[`docs/MAC_HANDOFF.md`](docs/MAC_HANDOFF.md) for the remaining live gates.
+
+The owner can now record active time without a database or model call:
+
+```bash
+PYTHONPATH=src python -m autoloop time start AL-001
+PYTHONPATH=src python -m autoloop time stop AL-001
+PYTHONPATH=src python -m autoloop time summary AL-001
+```
+
+Time measurements remain local in `data/owner-time.jsonl`; incomplete timers
+have `active_seconds: null` rather than guessed durations.
+
 ## Next acceptance gates
 
-1. **AL-001**: finish freezing the disposable five-scenario pilot fixture, then execute it against each candidate and record independently verifiable PASS/FAIL/NOT_TESTED outcomes. The checked-in mock harness is **preflight only**.
-2. **AL-002/003/004**: run the Bernstein/Kandev/Cezar pilots with subscription credentials on an isolated user-controlled host.
-3. **AL-005**: choose the platform only if mandatory gates 2–4 pass, then finalize ADR-001.
-4. **AL-102–106**: integrate the offline components with the chosen platform and prove real process callbacks, OS-isolated QA push denial, and mobile access on an actual phone before accepting the entire autonomous loop.
+1. **Smoke A (Mac + launchd):** verify both subscription CLI logins, structured outputs, and the `subscription_only` billing negatives. Unknown billing mode fails closed; no paid API fallback.
+2. **Wrapper + permissions:** implement bounded attempts, durable `flock`/`.exit` recovery, independently isolated read-only QA, least-privilege publisher and ruleset checks.
+3. **Smoke B (Mac + GitHub):** run the *unchanged frozen* real E2E fixture and all four `kill -9` scenarios; prohibit merge. No mock-only result can become PASS.
+4. **Economics pilot:** after Smoke B, compare 12–20 manual versus autoLoop tasks using [predeclared gates](docs/ECONOMICS.md), known-defect QA controls and a common owner-time ledger.
+5. **Mobile management:** enable GitHub issue commands and safe phone access after the reliability gates. Retry the Bernstein/Kandev/Cezar executor pilot only if the own executor has a material architectural failure.
 
 This repository contains no production agent credentials. Do not commit credentials, or run dangerous permission-bypass flags on a personal machine.
